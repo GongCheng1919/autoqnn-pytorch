@@ -1,0 +1,7 @@
+#file
+*.h5
+#*.log
+
+#folder
+.ipynb_checkpoints
+__pycache__
