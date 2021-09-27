@@ -7,3 +7,7 @@
 #folder
 .ipynb_checkpoints
 __pycache__
+autoqnn.egg-info
+build
+dist
+
