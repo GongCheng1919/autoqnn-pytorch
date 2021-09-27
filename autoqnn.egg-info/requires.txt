@@ -1,0 +1,10 @@
+pytorch>=1.4.0
+torchvision
+matplotlib
+numpy
+jupyter
+graphviz
+scikit-learn
+
+[tests]
+scikit-image

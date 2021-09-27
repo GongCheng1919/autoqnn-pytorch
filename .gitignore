@@ -1,5 +1,7 @@
 #file
 *.h5
+*.pt
+*.pth
 #*.log
 
 #folder

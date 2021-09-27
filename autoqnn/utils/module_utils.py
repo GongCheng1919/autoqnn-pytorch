@@ -11,9 +11,10 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5) # 1 input image channel, 6 output channels, 5x5 square convolution kernel
+        self.bn1 = nn.BatchNorm2d(6) # 1 input image channel, 6 output channels, 5x5 square convolution kernel
 
     def forward(self, x):
-        x = F.max_pool2d(F.relu(self.bn1(nn.Conv2d(1, 6, 5)(x))), (2, 2)) # Max pooling over a (2, 2) window
+        x = F.max_pool2d(F.relu(self.bn1(self.conv1(x))), (2, 2)) # Max pooling over a (2, 2) window
         return x
 module = Net()
 nodes,edges,dot=view_module(module,(1,1,32,32))

@@ -1,0 +1,28 @@
+digraph Net {
+	140401144008512 [label="output0
+ (1, 6, 14, 14)" fillcolor=orange]
+	140401144017296 [label=MaxPool2DWithIndicesBackward fillcolor=orange]
+	140401144017488 [label=ReluBackward0 fillcolor=orange]
+	140401144017632 [label=NativeBatchNormBackward fillcolor=orange]
+	140401144017728 [label=AddBackward0 fillcolor=orange]
+	140401144017872 [label=MkldnnConvolutionBackward fillcolor=orange]
+	140401144017968 [label="weights
+ (1, 1, 32, 32)" fillcolor=orange]
+	140401144018016 [label=AddBackward0 fillcolor=orange]
+	140401144018160 [label="conv1.weight
+ (6, 1, 5, 5)" fillcolor=orange]
+	140401144017008 [label="bn1.weight
+ (6)" fillcolor=orange]
+	140401144017776 [label="bn1.bias
+ (6)" fillcolor=orange]
+	140401144017296 -> 140401144008512 [fillcolor=orange]
+	140401144017488 -> 140401144017296 [fillcolor=orange]
+	140401144017632 -> 140401144017488 [fillcolor=orange]
+	140401144017728 -> 140401144017632 [fillcolor=orange]
+	140401144017872 -> 140401144017728 [fillcolor=orange]
+	140401144017968 -> 140401144017872 [fillcolor=orange]
+	140401144018016 -> 140401144017872 [fillcolor=orange]
+	140401144018160 -> 140401144018016 [fillcolor=orange]
+	140401144017008 -> 140401144017632 [fillcolor=orange]
+	140401144017776 -> 140401144017632 [fillcolor=orange]
+}
