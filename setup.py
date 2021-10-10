@@ -28,6 +28,7 @@ REQUIRED = [
     'matplotlib',
     'numpy',
     'graphviz',
+    'opencv-python',
     'scikit-learn'
 ]
 
