@@ -1,11 +1,17 @@
 # Installation
-```pip install git+git://gitee.com/GooCee/AutoQNN-pytorch.git```
+```bash
+# Install AutoQNN form Gitee
+pip install git+git://gitee.com/GooCee/AutoQNN-pytorch.git
+```
 
-```pip install git+git://github.com/GongCheng1919/autoqnn-pytorch.git```
+```bash
+# Install AutoQNN form Github
+pip install git+git://github.com/GongCheng1919/autoqnn-pytorch.git
+```
 
 # Usage
 
-```
+```python
 from autoqnn.core import convert
 from autoqnn.quantizers import FixedQuant,FixedQuantAct
 q_model = convert(module,
@@ -16,7 +22,7 @@ q_model = convert(module,
 
 # Demo
 
-```
+```python
 import sys
 import torch
 import numpy as np
