@@ -1,5 +1,6 @@
 # Installation
 ```pip install git+git://gitee.com/GooCee/AutoQNN-pytorch.git```
+
 ```pip install git+git://github.com/GongCheng1919/autoqnn-pytorch.git```
 
 # Usage
