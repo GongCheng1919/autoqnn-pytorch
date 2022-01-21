@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+# pip install thop
 from thop import profile
 
 # get feature size
@@ -39,12 +40,78 @@ def get_flops_params_mems(module,input_shape,w_bit,a_bit,name="module",verbose=1
         -------
         >> Flops, Params and Mems of alexnet is [0.71GFLOPs,61.10M, 474.63M]
     '''
+    Byte2Bit = 8.0
     obj = module
     batch_size = input_shape[0]
     inputs=torch.randn(*input_shape)
     _flops, _params = profile(module, inputs=(inputs, ),verbose=False)
     _flops = _flops/batch_size
-    _mems=_params*(w_bit/4.0)+get_feature_size(module,inputs)/batch_size*(a_bit/4.0)
+    _mems=_params*(w_bit/Byte2Bit)+get_feature_size(module,inputs)/batch_size*(a_bit/Byte2Bit)
     if verbose:
         print("Flops, Params and Mems of %s is [%.2fGFLOPs,%.2fM, %.2fM]"%(name,_flops/10**9,_params/10**6,_mems/2**20))
     return _flops, _params,_mems
+
+devices={# device_name:[FLOPS, Bandwidth, Power]
+     "QS-855+":[1.032*10**12,34.1*2**30,10],
+     "QS-888+":[1.72*10**12,51.2*2**30,10],
+     "1080ti":[10.616*10**12,484*2**30,250],
+     "2080ti":[11.75*10**12,616*2**30,250],
+     "3090":[29.28*10**12,936.2*2**30,350],
+     "A6000":[31.29*10**12,768*2**30,300],
+     "Xeon E5-2678 v3":[1.9/2*10**12,68*2**30,120],
+     "Apple A14 Bionic":[1.536*10**12,34.1*2**30,10],
+     "Kirin 9000":[2.332*10**12,44*2**30,10],
+     }
+
+def get_attainable_FLOPS(model,input_shape,device_key,w_bit=32,a_bit=32,model_name="model"):
+    '''
+    The candidate devices includes: 
+    ['QS-855+', 'QS-888+', '1080ti', '2080ti', '3090', 'A6000', 'Xeon E5-2678 v3',
+    'Apple A14 Bionic', 'Kirin 9000']
+    '''
+    # get model computing intensity
+    flops,_,mems=get_flops_params_mems(model,input_shape,32,32,model_name)
+    intensity = flops/mems
+    # get device computing intensity
+    flops,bandwidth,_ = devices.get(device_key)
+    device_intensity = flops/bandwidth
+    # get attainable performance
+    if intensity>=device_intensity:
+        attainable_flops = flops
+        print("%s is Compute-bound model on %s"%(model_name,device_key))
+    else:
+        # model_flops/model_mems * device_bandwidth
+        attainable_flops = intensity*bandwidth
+        print("%s is IO-bound model on %s"%(model_name,device_key))
+    return attainable_flops
+
+###################### stat sparsity #######################
+def count_zero(w):
+    return torch.sum(w == 0).item()
+
+def stats_module_sparsity(module,name):
+    if hasattr(module,name):
+        w = getattr(module,name)
+        sparsity = count_zero(w)/w.numel()
+    return sparsity
+
+def stats_sparsity(parameters_to_prune,verbose=1):
+    '''
+    return: sparsity_list, global_sparsity
+    '''
+    zero_count = 0
+    numel = 0
+    sparsity_list = []
+    for i, (module,name) in enumerate(parameters_to_prune):
+        w=getattr(module,name)
+        zero_count += count_zero(w)
+        numel += w.numel()
+        sparsity = count_zero(w)/w.numel()
+        sparsity_list.append(sparsity)
+        if verbose:
+            print("Sparsity in submodule[{:d}].{:s}: {:.2f}%".format(
+            i,name,100.*sparsity))
+    global_sparsity = zero_count/numel
+    if verbose:
+        print("Global sparsity: {:.2f}%".format(100. * global_sparsity))
+    return tuple(sparsity_list), global_sparsity
