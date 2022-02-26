@@ -3,6 +3,7 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from torch.utils.data import DataLoader
 from PIL import Image
 from .base import DataLoaderX, data_prefetcher
 
@@ -44,7 +45,9 @@ def check_idx(train_dataset,val_dataset):
 def to_one_hot(x,num_classes):
     return torch.nn.functional.one_hot(x,num_classes=num_classes)
         
-def get_dataset(data_path,batch_size=256, workers=8, parse_type="torch",mean_std=([0,0,0],[1,1,1])):
+def get_dataset(data_path,batch_size=256, 
+                workers=8, parse_type="torch",
+                mean_std=([0,0,0],[1,1,1]),prefetch = False):
     '''
     default mean=[0.485, 0.456, 0.406]
     default std=[0.229, 0.224, 0.225]
@@ -85,11 +88,20 @@ def get_dataset(data_path,batch_size=256, workers=8, parse_type="torch",mean_std
     check_idx(train_dataset,val_dataset)
     train_sampler = None
     # train 数据下载及预处理
-    train_loader = DataLoaderX(
-        train_dataset, batch_size=batch_size, shuffle=(train_sampler is None),
-        num_workers=workers, pin_memory=True, sampler=train_sampler)
+    if prefetch:
+        train_loader = DataLoaderX(
+            train_dataset, batch_size=batch_size, shuffle=(train_sampler is None),
+            num_workers=workers, pin_memory=True, sampler=train_sampler)
 
-    val_loader = DataLoaderX(
-        val_dataset, batch_size=batch_size, shuffle=False,
-        num_workers=workers, pin_memory=True)
+        val_loader = DataLoaderX(
+            val_dataset, batch_size=batch_size, shuffle=False,
+            num_workers=workers, pin_memory=True)
+    else:
+        train_loader = DataLoader(
+            train_dataset, batch_size=batch_size, shuffle=(train_sampler is None),
+            num_workers=workers, pin_memory=True, sampler=train_sampler)
+
+        val_loader = DataLoader(
+            val_dataset, batch_size=batch_size, shuffle=False,
+            num_workers=workers, pin_memory=True)
     return train_loader, val_loader
