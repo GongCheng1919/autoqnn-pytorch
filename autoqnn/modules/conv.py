@@ -12,17 +12,20 @@ from torch._jit_internal import List
 from typing import Optional, List, Tuple, Union
 
 from autoqnn.quantizers import Quantization
+
+
 class _ConvNd(nn.modules.conv._ConvNd):
-    __conv_constants__=['stride', 'padding', 'dilation', 'groups', 'bias',
+    __conv_constants__=['stride', 'padding', 'dilation', 'groups', # 'bias', bias is different from other arguments
                      'padding_mode','transposed', 'output_padding', 'in_channels',
                      'out_channels', 'kernel_size','device','dtype']
-    __constants__ = ['weight_quant','bias_quant','act_quant']
+    __constants__ = ['weight_quant','bias_quant','act_quant','pre_act_quant']
     
     def __init__(self, **kwargs):
         super(_ConvNd, self).__init__(**kwargs)
         self.weight_quant=kwargs.get("weight_quant",Quantization())
         self.bias_quant=kwargs.get("bias_quant",Quantization())
         self.act_quant=kwargs.get("act_quant",Quantization())
+        self.pre_act_quant=kwargs.get("pre_act_quant",True)
     
     @classmethod
     def from_module(cls,mod):
@@ -32,7 +35,19 @@ class _ConvNd(nn.modules.conv._ConvNd):
                 raise TypeError("Object %s is not the subclass of Conv"%mod.__class__.__name__)
             for key in _ConvNd.__conv_constants__:
                 kwargs[key]=mod.__getattribute__(key) if key in mod.__dict__ else None
-        return cls(**kwargs)
+            if hasattr(mod,"bias") and mod.bias is not None:
+                kwargs['bias']=True
+            else:
+                kwargs['bias']=False
+        
+        new_module = cls(**kwargs)
+        new_module.load_state_dict(mod.state_dict())
+#         if hasattr(mod, 'weight') and mod.weight is not None:
+#             new_module.weight.data[0] = mod.weight.data[0]
+            
+#         if hasattr(mod, 'bias') and mod.bias is not None:
+#             new_module.bias.data[0] = mod.bias.data[0]
+        return new_module
 
 class Conv1d(_ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
@@ -49,6 +64,8 @@ class Conv1d(_ConvNd):
         super(Conv1d, self).__init__(**kwargs)
 
     def forward(self, input):
+        if self.pre_act_quant:
+            input = self.act_quant(input)
         weight = self.weight_quant(self.weight)
         bias = self.bias_quant(self.bias) if self.bias is not None else None
         if self.padding_mode == 'circular':
@@ -58,7 +75,10 @@ class Conv1d(_ConvNd):
                             _single(0), self.dilation, self.groups)
         self.act = F.conv1d(input, weight, bias, self.stride,
                         self.padding, self.dilation, self.groups)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
 
 class Conv2d(_ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
@@ -75,6 +95,9 @@ class Conv2d(_ConvNd):
         super(Conv2d, self).__init__(**kwargs)
 
     def conv2d_forward(self, input, weight):
+        if self.pre_act_quant:
+            input = self.act_quant(input)
+            
         weight = self.weight_quant(weight)
         bias = self.bias_quant(self.bias) if self.bias is not None else None
         if self.padding_mode == 'circular':
@@ -85,7 +108,10 @@ class Conv2d(_ConvNd):
                             _pair(0), self.dilation, self.groups)
         self.act = F.conv2d(input, weight, bias, self.stride,
                         self.padding, self.dilation, self.groups)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
 
     def forward(self, input):
         return self.conv2d_forward(input, self.weight)
@@ -105,6 +131,9 @@ class Conv3d(_ConvNd):
         super(Conv3d, self).__init__(**kwargs)
 
     def forward(self, input):
+        if self.pre_act_quant:
+            input = self.act_quant(input)
+            
         weight = self.weight_quant(self.weight)
         bias = self.bias_quant(self.bias) if self.bias is not None else None
         if self.padding_mode == 'circular':
@@ -116,7 +145,10 @@ class Conv3d(_ConvNd):
                             self.dilation, self.groups)
         self.act = F.conv3d(input, weight, bias, self.stride,
                         self.padding, self.dilation, self.groups)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
     
 class _ConvTransposeNd(_ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride,
@@ -189,6 +221,9 @@ class ConvTranspose1d(_ConvTransposeNd):
 
     def forward(self, input, output_size=None):
         # type: (Tensor, Optional[List[int]]) -> Tensor
+        if self.pre_act_quant:
+            input = self.act_quant(input)
+            
         if self.padding_mode != 'zeros':
             raise ValueError('Only `zeros` padding mode is supported for ConvTranspose1d')
         assert isinstance(self.padding, tuple)
@@ -198,7 +233,10 @@ class ConvTranspose1d(_ConvTransposeNd):
         self.act = F.conv_transpose1d(
             input, weight, bias, self.stride, self.padding,
             output_padding, self.groups, self.dilation)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
 
 class ConvTranspose2d(_ConvTransposeNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
@@ -217,6 +255,9 @@ class ConvTranspose2d(_ConvTransposeNd):
 
     def forward(self, input, output_size=None):
         # type: (Tensor, Optional[List[int]]) -> Tensor
+        if self.pre_act_quant:
+            input = self.act_quant(input)
+            
         if self.padding_mode != 'zeros':
             raise ValueError('Only `zeros` padding mode is supported for ConvTranspose2d')
         assert isinstance(self.padding, tuple)
@@ -226,7 +267,10 @@ class ConvTranspose2d(_ConvTransposeNd):
         self.act = F.conv_transpose2d(
             input, weight, bias, self.stride, self.padding,
             output_padding, self.groups, self.dilation)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
 
 class ConvTranspose3d(_ConvTransposeNd):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
@@ -245,6 +289,9 @@ class ConvTranspose3d(_ConvTransposeNd):
 
     def forward(self, input, output_size=None):
         # type: (Tensor, Optional[List[int]]) -> Tensor
+        if self.pre_act_quant:
+            input = self.act_quant(input)
+            
         if self.padding_mode != 'zeros':
             raise ValueError('Only `zeros` padding mode is supported for ConvTranspose3d')
         assert isinstance(self.padding, tuple)
@@ -254,4 +301,7 @@ class ConvTranspose3d(_ConvTransposeNd):
         self.act = F.conv_transpose3d(
             input, weight, bias, self.stride, self.padding,
             output_padding, self.groups, self.dilation)
-        return self.act_quant(self.act)
+        if self.pre_act_quant:
+            return self.act
+        else:
+            return self.act_quant(self.act)
