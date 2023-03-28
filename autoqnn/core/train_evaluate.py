@@ -28,9 +28,11 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
         
-def adjust_learning_rate(optimizer, epoch):
+def adjust_learning_rate(optimizer, epoch, steps=[10]):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 30))            # args.lr = 0.1 , 即每30步，lr = lr /10
+    lr = optimizer.param_groups[0]['lr']
+    if epoch in steps:
+        lr=lr*0.1
     for param_group in optimizer.param_groups:       # 将更新的lr 送入优化器 optimizer 中，进行下一次优化
         param_group['lr'] = lr
 
@@ -82,7 +84,7 @@ def validate_on_batch(val_loader, model, criterion, metric_meds=[]):
            batch_time=batch_time,loss=loss, metric_str=metric_str))
     del input
     del target
-    return metric_vals
+    return loss.item(), metric_vals
     
 def validate(val_loader, model, criterion, metric_meds=[], print_freq=10):
     batch_time = AverageMeter()
@@ -123,7 +125,7 @@ def validate(val_loader, model, criterion, metric_meds=[], print_freq=10):
         metric_list[ind]="{met_name} {met.avg:.3f}".format(met_name=metric_meds[ind].__name__,met=metric_vals[ind])
     print(' * {metric_str}'.format(metric_str="\t".join(metric_list)))
 
-    return [met.avg for met in metric_vals] 
+    return losses.avg, [met.avg for met in metric_vals] 
 
 def train_on_batch(train_loader, model, criterion, optimizer, metric_meds=[]):
     input, target = next(iter(train_loader))
@@ -159,7 +161,7 @@ def train_on_batch(train_loader, model, criterion, optimizer, metric_meds=[]):
           batch_time=batch_time,loss=loss, metric_str=metric_str))
     del input
     del target
-    return metric_vals
+    return loss.item(), metric_vals
 
 
 def train(train_loader, model, criterion, optimizer, epoch=1,metric_meds=[], print_freq=10):
@@ -215,3 +217,5 @@ def train(train_loader, model, criterion, optimizer, epoch=1,metric_meds=[], pri
                    data_time=data_time, loss=losses, metric_str=metric_str),end="")
         
         input, target = prefetcher.next()
+        
+    return batch_time.avg, data_time.avg, losses.avg, [met.avg for met in metric_vals] 
