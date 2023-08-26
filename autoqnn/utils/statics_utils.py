@@ -2,6 +2,7 @@ import torch
 import numpy as np
 # pip install thop
 from thop import profile
+import matplotlib.pyplot as plt
 
 # get feature size
 class HookTool: 
@@ -29,6 +30,63 @@ def get_feature_size(module,inputs):
             shapes.append(fea_hook.fea.shape)
     out_size=sum([np.prod(shape) for shape in shapes])
     return out_size
+
+class ModuleIO:
+    def __init__(self, module):
+        self.module = module
+        self.hook_handle = None
+        self.input = None
+        self.output = None
+
+    def hook(self, module, input, output):
+        self.input = input
+        self.output = output
+
+    def register(self):
+        self.hook_handle = self.module.register_forward_hook(self.hook)
+
+    def unregister(self):
+        if self.hook_handle is not None:
+            self.hook_handle.remove()
+            self.hook_handle = None
+
+class ModuleIOs:
+    def __init__(self, named_modules):
+        self.ModuleIO_dict={}
+        for n, m in named_modules:
+            self.ModuleIO_dict[n]=ModuleIO(m)
+            
+    def register(self):
+        for n, m in self.ModuleIO_dict.items():
+            m.register()
+    
+    def unregister(self):
+        for n, m in self.ModuleIO_dict.items():
+            m.unregister()
+    
+    def draw_differences(self, rows=None, bins=50,splited=True,scaled=True,figsize=(10,5)):
+        if rows is None:
+            rows = len(self.ModuleIO_dict)
+            cols = 2 if splited else 1
+        else:
+            splited=False
+            cols = (len(self.ModuleIO_dict)-1)//rows+1
+        
+        draw_num = 1
+        plt.figure(figsize=figsize)
+        for n, m in self.ModuleIO_dict.items(): 
+            plt.subplot(rows,cols,draw_num)
+            draw_num+=1
+            d = m.input[0].detach().cpu().numpy().flatten()
+            if scaled:
+                d = np.clip(d,d.mean()-3*d.std(),d.mean()+3*d.std())
+            plt.hist(d, bins=bins)
+            if splited:
+                plt.subplot(rows,cols,draw_num)
+                draw_num+=1
+            plt.hist(m.output.detach().cpu().numpy().flatten(), bins=bins)
+        
+        plt.tight_layout()
 
 # get model information
 def get_flops_params_mems(module,input_shape,w_bit,a_bit,name="module",verbose=1):

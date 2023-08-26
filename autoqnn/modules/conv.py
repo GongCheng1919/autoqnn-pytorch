@@ -41,7 +41,7 @@ class _ConvNd(nn.modules.conv._ConvNd):
                 kwargs['bias']=False
         
         new_module = cls(**kwargs)
-        new_module.load_state_dict(mod.state_dict())
+        new_module.load_state_dict(mod.state_dict(),strict=False)
 #         if hasattr(mod, 'weight') and mod.weight is not None:
 #             new_module.weight.data[0] = mod.weight.data[0]
             

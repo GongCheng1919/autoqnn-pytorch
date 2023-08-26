@@ -50,7 +50,7 @@ class Linear(nn.modules.linear.Linear):
                 kwargs['bias']=False
         
         new_module = cls(**kwargs)
-        new_module.load_state_dict(mod.state_dict())
+        new_module.load_state_dict(mod.state_dict(),strict=False)
         
         return new_module
     
@@ -92,7 +92,7 @@ class Bilinear(nn.modules.linear.Bilinear):
                 kwargs['bias']=False
                 
         new_module = cls(**kwargs)
-        new_module.load_state_dict(mod.state_dict())
+        new_module.load_state_dict(mod.state_dict(),strict=False)
         
         return new_module
     

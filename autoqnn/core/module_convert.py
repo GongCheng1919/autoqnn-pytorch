@@ -69,7 +69,9 @@ def swap_module(mod, mapping, quantize_config_dict,remove_old_config=True):
             if hasattr(new_mod,key):
                 if remove_old_config:
                     new_mod.__delattr__(key)
-                new_mod.__setattr__(key,copy.deepcopy(value))
+#                 new_mod.__setattr__(key,copy.deepcopy(value))
+                new_mod.__setattr__(key,value.clone_quantizer())
+
             else:
                 warnings.warn("%s is not a attribute of %s"%(key,cls.__name__))
          # respect device affinity when swapping modules

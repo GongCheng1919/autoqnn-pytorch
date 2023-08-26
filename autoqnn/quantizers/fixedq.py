@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import math
-from .quantization import Quantization
+from .quantization import Quantization,round_clip
 from ..utils.generic_utils import EMA
 
 class FixedQuant(Quantization):
