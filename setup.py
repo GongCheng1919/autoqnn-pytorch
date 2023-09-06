@@ -29,7 +29,12 @@ REQUIRED = [
     'numpy',
     'graphviz',
     'opencv-python',
-    'scikit-learn'
+    'scikit-learn',
+    'scipy',
+    'tqdm',
+    'thop',
+    'graphviz',
+    'prefetch_generator'
 ]
 
 # What packages are optional?

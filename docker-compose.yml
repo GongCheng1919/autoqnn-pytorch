@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+    autoqnn-pytorch-jupyterhub:
+        # build:
+        #    context: .
+        #    dockerfile: Dockerfile
+        image: jupyterhub-pytorch:latest
+        ports:
+            - '18888:8000'
+            - '18222:22'
+        volumes:
+            - "./:/home/gongcheng"
+        runtime: nvidia  # 启用NVIDIA运行时，启用GPU支持
+        container_name: jupyterhub-autoqnn-pytorch
+        #command: "/etc/init.d/ssh start && /etc/init.d/ssh status && jupyterhub -f /etc/.jupyter_config/jupyterhub_config.py --port 8000"
+        command: ["/bin/bash", "-c", "/etc/init.d/ssh start && jupyterhub -f /etc/.jupyter_config/jupyterhub_config.py --port 8000"]     
+        restart: always

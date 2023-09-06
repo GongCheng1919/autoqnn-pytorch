@@ -10,4 +10,9 @@ __pycache__
 autoqnn.egg-info
 build
 dist
-
+.bash_history
+.cache
+.ipython
+.jupyter
+.local
+.npm

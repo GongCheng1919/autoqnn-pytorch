@@ -4,3 +4,4 @@ matplotlib
 numpy
 graphviz
 scikit-learn
+prefetch_generator
