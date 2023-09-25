@@ -11,7 +11,7 @@ from torch.nn.modules.utils import _single, _pair, _triple
 from torch._jit_internal import List
 from typing import Optional, List, Tuple, Union
 
-from autoqnn.quantizers import Quantization
+from ..quantizers import Quantization
 
 
 class _ConvNd(nn.modules.conv._ConvNd):

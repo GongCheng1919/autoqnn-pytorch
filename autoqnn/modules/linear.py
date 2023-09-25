@@ -10,7 +10,7 @@ from torch.nn.modules.utils import _single, _pair, _triple
 from torch._jit_internal import List
 from typing import Optional, List, Tuple, Union
 
-from autoqnn.quantizers import Quantization
+from ..quantizers import Quantization
 class Linear(nn.modules.linear.Linear):
     __linear_constants__=['in_features', 'out_features', #'bias', 
                           'device','dtype']

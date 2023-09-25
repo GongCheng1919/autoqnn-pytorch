@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from . import modules
 # from . import accelerations
-# from . import models
+from . import models
 from . import datasets
 from . import quantizers
 from . import utils
