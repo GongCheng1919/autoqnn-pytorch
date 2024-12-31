@@ -79,10 +79,10 @@ class ESB_PerChannel(Quantization):
                 shifts=torch.pow(2.0,ns-self.linear_bits)
                 fixed=torch.round(input/shifts)*shifts
             fixed = torch.clip(fixed,-self.c,self.c)
-            # output = fixed*alpha_vec
-            # if self.mean_shift:
-            #     output=output+mean_vec
-            output = fixed
+            output = fixed*alpha_vec
+            if self.mean_shift:
+                output=output+mean_vec
+            # output = fixed
         
         # grad
         output = self.diff_func(input,output,self.gradient_ratio)
